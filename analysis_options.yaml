@@ -1,0 +1,17 @@
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    # Add specific rules for the project
+    - prefer_const_constructors
+    - prefer_const_literals_to_create_immutables
+    - use_key_in_widget_constructors
+    - avoid_print
+    - prefer_single_quotes
+    - require_trailing_commas
+
+analyzer:
+  exclude:
+    - build/**
+    - lib/**/*.g.dart
+    - lib/**/*.freezed.dart
