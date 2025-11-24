@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/chat_provider.dart';
 import '../providers/profile_provider.dart';
 import '../services/chatgpt_service.dart';
+import '../services/local_storage_service.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -73,6 +74,27 @@ class _ChatScreenState extends State<ChatScreen> {
                     message.text,
                     style: const TextStyle(fontSize: 16),
                   ),
+                  // Добавляем медицинский дисклеймер только для сообщений от ассистента,
+                  // исключая системные команды и системный промпт
+                  if (!message.isUser &&
+                      !message.text.contains('Вы являетесь персональным ассистентом по здоровью') &&
+                      !message.text.startsWith('Доступные команды:') &&
+                      !message.text.startsWith('Привет! Я ваш персональный ассистент по здоровью') &&
+                      !message.text.startsWith('Для настройки персонального профиля') &&
+                      !message.text.startsWith('Для управления напоминаниями') &&
+                      !message.text.startsWith('Неизвестная команда'))
+                    const Padding(
+                      padding: EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        'ВАЖНО: Я не врач. При серьезных симптомах немедленно обратитесь к специалисту.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.red,
+                          fontStyle: FontStyle.normal,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
                   const SizedBox(height: 4),
                   Text(
                     '${message.timestamp.hour}:${message.timestamp.minute.toString().padLeft(2, '0')}',
@@ -100,7 +122,7 @@ class _ChatScreenState extends State<ChatScreen> {
             child: TextField(
               controller: _messageController,
               decoration: const InputDecoration(
-                hintText: 'Введите ваш вопрос о здоровье или команду (/start, /help, /profile)...',
+                hintText: 'Введите ваш вопрос о здоровью или команду (/start, /help, /add_reminder, /list_reminders)...',
                 border: OutlineInputBorder(),
                 contentPadding: EdgeInsets.all(12),
               ),
@@ -145,12 +167,6 @@ class _ChatScreenState extends State<ChatScreen> {
 
       // Добавляем ответ ассистента
       chatProvider.addMessage(response, false);
-
-      // Добавляем медицинский дисклеймер
-      chatProvider.addMessage(
-        'ВАЖНО: Я не врач. При серьезных симптомах немедленно обратитесь к специалисту.',
-        false
-      );
     }
 
     // Прокручиваем к последнему сообщению
@@ -164,6 +180,24 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _handleCommand(String command, ChatProvider chatProvider) async {
+    if (command.startsWith('/add_reminder ')) {
+      // Обработка команды /add_reminder для добавления напоминания
+      String reminderText = command.substring('/add_reminder '.length).trim();
+      if (reminderText.isEmpty) {
+        chatProvider.addMessage(
+          'Пожалуйста, укажите текст напоминания. Пример: /add_reminder Принять лекарство в 14:00',
+          false
+        );
+      } else {
+        await _addReminder(reminderText);
+        chatProvider.addMessage(
+          'Напоминание добавлено: "$reminderText". Для просмотра всех напоминаний используйте /list_reminders или перейдите в раздел "Напоминания".',
+          false
+        );
+      }
+      return;
+    }
+
     switch (command) {
       case '/start':
         chatProvider.addMessage(
@@ -185,6 +219,8 @@ class _ChatScreenState extends State<ChatScreen> {
           '/profile - Настройка персонального профиля\n'
           '/symptoms - Анализ симптомов\n'
           '/reminders - Управление напоминаниями\n'
+          '/add_reminder [текст] - Добавить напоминание\n'
+          '/list_reminders - Просмотреть все напоминания\n'
           '/bmi - Рассчет индекса массы тела\n'
           '/diet - Рекомендации по диете\n'
           '/exercise - Рекомендации по физическим упражнениям\n\n'
@@ -221,6 +257,9 @@ class _ChatScreenState extends State<ChatScreen> {
           '• Просмотреть все установленные напоминания',
           false
         );
+        break;
+      case '/list_reminders':
+        await _listReminders(chatProvider);
         break;
       case '/bmi':
         final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
@@ -265,13 +304,38 @@ class _ChatScreenState extends State<ChatScreen> {
         );
         break;
     }
+  }
 
-    // Добавляем медицинский дисклеймер для команд, кроме /help и /start
-    if (command != '/help' && command != '/start') {
-      chatProvider.addMessage(
-        'ВАЖНО: Я не врач. При серьезных симптомах немедленно обратитесь к специалисту.',
-        false
-      );
+  Future<void> _addReminder(String reminderText) async {
+    // Получаем существующие напоминания
+    List<Map<String, dynamic>> reminders = await LocalStorageService.getReminders();
+
+    // Создаем новое напоминание
+    Map<String, dynamic> newReminder = {
+      'title': reminderText,
+      'date': DateTime.now().millisecondsSinceEpoch,
+      'time': TimeOfDay.now().hour * 60 + TimeOfDay.now().minute,
+      'id': DateTime.now().millisecondsSinceEpoch,
+    };
+
+    // Добавляем новое напоминание
+    reminders.add(newReminder);
+
+    // Сохраняем напоминания
+    await LocalStorageService.saveReminders(reminders);
+  }
+
+  Future<void> _listReminders(ChatProvider chatProvider) async {
+    List<Map<String, dynamic>> reminders = await LocalStorageService.getReminders();
+
+    if (reminders.isEmpty) {
+      chatProvider.addMessage('У вас нет установленных напоминаний.', false);
+    } else {
+      String remindersText = 'Ваши напоминания:\n';
+      for (int i = 0; i < reminders.length; i++) {
+        remindersText += '${i + 1}. ${reminders[i]['title']}\n';
+      }
+      chatProvider.addMessage(remindersText, false);
     }
   }
 
