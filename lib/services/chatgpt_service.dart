@@ -9,8 +9,18 @@ class ChatGPTService {
   static List<ChatMessage> _conversationHistory = [];
 
   static Future<void> initialize() async {
-    await dotenv.load(fileName: '.env');
-    final apiKey = dotenv.env['CHATGPT_API_KEY'] ?? 'sk-4i1NKXLxmr4Ai3vXXFKhbFMn1jf5v9IM';
+    late String? apiKey;
+    try {
+      await dotenv.load(fileName: '.env');
+      apiKey = dotenv.env['CHATGPT_API_KEY'];
+    } catch (e) {
+      log(
+        'env fetch exception',
+        name: 'ChatGPTService.initialize()',
+        error: e,
+      );
+      apiKey = const String.fromEnvironment('CHATGPT_API_KEY');
+    }
 
     if (apiKey != null && apiKey.isNotEmpty) {
       _chat = ChatOpenAI(
