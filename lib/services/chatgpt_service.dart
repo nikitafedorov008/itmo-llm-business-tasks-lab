@@ -11,15 +11,15 @@ class ChatGPTService {
   static Future<void> initialize() async {
     late String? apiKey;
     try {
-      await dotenv.load(fileName: '.env');
-      apiKey = dotenv.env['CHATGPT_API_KEY'];
+      apiKey = const String.fromEnvironment('CHATGPT_API_KEY');
     } catch (e) {
       log(
-        'env fetch exception',
+        'dart define fetch exception',
         name: 'ChatGPTService.initialize()',
         error: e,
       );
-      apiKey = const String.fromEnvironment('CHATGPT_API_KEY');
+      await dotenv.load(fileName: '.env');
+      apiKey = dotenv.env['CHATGPT_API_KEY'];
     }
 
     if (apiKey != null && apiKey.isNotEmpty) {
