@@ -6,6 +6,7 @@ import 'package:langchain_openai/langchain_openai.dart';
 
 class ChatGPTService {
   static ChatOpenAI? _chat;
+  static List<ChatMessage> _conversationHistory = [];
 
   static Future<void> initialize() async {
     await dotenv.load(fileName: '.env');
@@ -14,7 +15,6 @@ class ChatGPTService {
     if (apiKey != null && apiKey.isNotEmpty) {
       _chat = ChatOpenAI(
         apiKey: apiKey,
-        //baseUrl: 'https://api.proxyapi.ru/openai/v1',
         defaultOptions: const ChatOpenAIOptions(
           model: 'gpt-5-mini',
         ),
@@ -28,21 +28,31 @@ class ChatGPTService {
     }
 
     try {
+      // Добавляем сообщение пользователя в историю
+      _conversationHistory.add(
+        HumanChatMessage(
+          content: ChatMessageContent.text(message),
+        ),
+      );
+
       // Получаем данные профиля из localStorage
       String profileInfo = await _getProfileInfo();
 
-      // Формируем промпт с информацией о пользователе
-      final prompt = '''Данные пользователя: $profileInfo
+      // Формируем системное сообщение с информацией о пользователе
+      final systemMessage = SystemChatMessage(content: '''Вы являетесь персональным ассистентом по здоровью. Отвечайте на вопросы пользователя о здоровье, питании, физических упражнениях и других медицинских темах. ВАЖНО: Я не врач. При серьезных симптомах немедленно обратитесь к специалисту.
 
-Вопрос: $message
+Данные пользователя: $profileInfo''');
 
-Вы являетесь персональным ассистентом по здоровью. Отвечайте на вопросы пользователя о здоровье, питании, физических упражнениях и других медицинских темах. ВАЖНО: Я не врач. При серьезных симптомах немедленно обратитесь к специалисту.''';
-
-      final messages = [
-        HumanChatMessage(content: ChatMessageContent.text(prompt)),
+      // Собираем все сообщения: системное + история разговора
+      final messages = <ChatMessage>[
+        systemMessage,
+        ..._conversationHistory,
       ];
 
       final result = await _chat!.call(messages);
+
+      // Добавляем ответ ассистента в историю
+      _conversationHistory.add(AIChatMessage(content: result.content.toString()));
 
       return result.content.toString();
     } catch (e) {
@@ -100,5 +110,16 @@ class ChatGPTService {
     } catch (e) {
       return 'Не удалось получить данные профиля.';
     }
+  }
+
+  // Методы для работы с историей разговора
+  static List<ChatMessage> getConversationHistory() => _conversationHistory;
+
+  static void clearConversationHistory() {
+    _conversationHistory.clear();
+  }
+
+  static void setConversationHistory(List<ChatMessage> history) {
+    _conversationHistory = history;
   }
 }

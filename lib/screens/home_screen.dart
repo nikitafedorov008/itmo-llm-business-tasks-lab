@@ -7,9 +7,28 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Персональный ассистент по здоровью'),
-        backgroundColor: Colors.cyan,
-        foregroundColor: Colors.white,
+        surfaceTintColor: Colors.cyan,
+        backgroundColor: Colors.transparent,
+        toolbarHeight: 80,
+        title: const Column(
+          children: [
+            Text(
+              'Персональный ассистент по здоровью',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 6),
+            Text(
+              'поможет заботиться о здоровье с помощью современных технологий',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -17,60 +36,67 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Добро пожаловать в Персональный ассистент по здоровью!',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Наш ассистент поможет вам заботиться о своем здоровье с помощью современных технологий.',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
-              ),
-              const SizedBox(height: 30),
-              Card(
-                elevation: 4,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      ListTile(
-                        leading: const Icon(Icons.health_and_safety, color: Colors.cyan),
-                        title: const Text('Чат с ассистентом'),
-                        subtitle: const Text('Задайте вопросы о здоровье, питании и образе жизни'),
-                        trailing: const Icon(Icons.arrow_forward_ios),
-                        onTap: () {
-                          Navigator.pushNamed(context, '/chat');
-                        },
-                      ),
-                      const Divider(),
-                      ListTile(
-                        leading: const Icon(Icons.person, color: Colors.cyan),
-                        title: const Text('Профиль'),
-                        subtitle: const Text('Настройте персональные данные'),
-                        trailing: const Icon(Icons.arrow_forward_ios),
-                        onTap: () {
-                          Navigator.pushNamed(context, '/profile');
-                        },
-                      ),
-                      const Divider(),
-                      ListTile(
-                        leading: const Icon(Icons.notifications, color: Colors.cyan),
-                        title: const Text('Напоминания'),
-                        subtitle: const Text('Установите напоминания о приеме лекарств и активности'),
-                        trailing: const Icon(Icons.arrow_forward_ios),
-                        onTap: () {
-                          Navigator.pushNamed(context, '/reminders');
-                        },
-                      ),
-                    ],
-                  ),
-                ),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  // Определяем количество колонок в зависимости от ширины экрана
+                  int crossAxisCount = 2; // по умолчанию для мобильных
+                  if (constraints.maxWidth > 600) {
+                    crossAxisCount = 3;
+                  }
+                  if (constraints.maxWidth > 900) {
+                    crossAxisCount = 4;
+                  }
+
+                  double cardWidth = (constraints.maxWidth - 20) /
+                      crossAxisCount - 10;
+
+                  return Center(
+                    child: Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      alignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        _buildResponsiveFunctionCard(
+                          context,
+                          Icons.health_and_safety,
+                          'Чат',
+                          'Задайте вопросы о здоровье',
+                          '/chat',
+                          Colors.cyan,
+                          cardWidth,
+                        ),
+                        _buildResponsiveFunctionCard(
+                          context,
+                          Icons.person,
+                          'Профиль',
+                          'Персональные данные',
+                          '/profile',
+                          Colors.green,
+                          cardWidth,
+                        ),
+                        _buildResponsiveFunctionCard(
+                          context,
+                          Icons.notifications,
+                          'Напоминания',
+                          'Управление напоминаниями',
+                          '/reminders',
+                          Colors.orange,
+                          cardWidth,
+                        ),
+                        _buildResponsiveFunctionCard(
+                          context,
+                          Icons.help,
+                          'Справка',
+                          'Информация о приложении',
+                          '/help',
+                          Colors.blue,
+                          cardWidth,
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 30),
               const Text(
@@ -158,6 +184,60 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildResponsiveFunctionCard(
+    BuildContext context,
+    IconData icon,
+    String title,
+    String subtitle,
+    String route,
+    Color color,
+    double width,
+  ) {
+    return SizedBox(
+      width: width,
+      child: Card(
+        elevation: 4,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () {
+            Navigator.pushNamed(context, route);
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 36,
+                  color: color,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

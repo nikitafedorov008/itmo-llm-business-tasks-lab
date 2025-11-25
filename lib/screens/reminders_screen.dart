@@ -70,8 +70,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Напоминания'),
-        backgroundColor: Colors.cyan,
-        foregroundColor: Colors.white,
+        surfaceTintColor: Colors.cyan,
         actions: [
           IconButton(
             icon: const Icon(Icons.add),

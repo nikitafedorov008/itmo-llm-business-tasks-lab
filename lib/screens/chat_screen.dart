@@ -19,6 +19,10 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     ChatGPTService.initialize();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+      chatProvider.loadChatHistory();
+    });
     super.initState();
   }
 
@@ -27,8 +31,9 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Чат с ассистентом'),
-        backgroundColor: Colors.cyan,
-        foregroundColor: Colors.white,
+        surfaceTintColor: Colors.cyan,
+        //backgroundColor: Colors.cyan,
+        //foregroundColor: Colors.white,
       ),
       body: Column(
         children: [
@@ -46,9 +51,11 @@ class _ChatScreenState extends State<ChatScreen> {
               },
             ),
           ),
-          const Divider(height: 1),
-          _buildInputArea(),
         ],
+      ),
+      bottomNavigationBar: BottomAppBar(
+        height: 128,
+        child: _buildInputArea(),
       ),
     );
   }
@@ -70,10 +77,7 @@ class _ChatScreenState extends State<ChatScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    message.text,
-                    style: const TextStyle(fontSize: 16),
-                  ),
+                  _buildMessageText(message.text),
                   // Добавляем медицинский дисклеймер только для сообщений от ассистента,
                   // исключая системные команды и системный промпт
                   if (!message.isUser &&
@@ -113,29 +117,186 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  Widget _buildMessageText(String text) {
+    // Проверяем, содержит ли сообщение команды
+    if (text.startsWith('/')) {
+      // Если это команда, делаем её жирной и выделяем цветом
+      return Text(
+        text,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: Colors.cyan,
+        ),
+      );
+    }
+
+    // Проверяем, есть ли команды в тексте (например, в списке команд)
+    if (text.contains('Доступные команды:') || text.contains('/start') || text.contains('/help')) {
+      // Разбиваем текст на части для обработки команд
+      return _buildFormattedText(text);
+    }
+
+    // Просто обычный текст
+    return Text(
+      text,
+      style: const TextStyle(fontSize: 16),
+    );
+  }
+
+  Widget _buildFormattedText(String text) {
+    if (text.contains('Доступные команды:')) {
+      // Разбиваем текст на строки и выделяем команды
+      List<String> lines = text.split('\n');
+      List<InlineSpan> spans = [];
+
+      for (int i = 0; i < lines.length; i++) {
+        String line = lines[i];
+        if (i > 0) spans.add(const TextSpan(text: '\n')); // Добавляем перевод строки
+
+        if (line.contains(RegExp(r'\/\w+'))) {
+          // Разбиваем строку на части: команды и обычный текст
+          final parts = _splitTextByCommands(line);
+          spans.addAll(parts);
+        } else {
+          spans.add(TextSpan(text: line, style: const TextStyle(fontSize: 16)));
+        }
+      }
+
+      return RichText(
+        text: TextSpan(
+          style: const TextStyle(fontSize: 16, height: 1.4),
+          children: spans,
+        ),
+      );
+    } else {
+      return Text(
+        text,
+        style: const TextStyle(fontSize: 16),
+      );
+    }
+  }
+
+  List<InlineSpan> _splitTextByCommands(String text) {
+    List<InlineSpan> spans = [];
+    final commandRegex = RegExp(r'\/\w+');
+    final matches = commandRegex.allMatches(text);
+
+    int lastEnd = 0;
+    for (Match match in matches) {
+      // Добавляем обычный текст до команды
+      if (match.start > lastEnd) {
+        spans.add(TextSpan(
+          text: text.substring(lastEnd, match.start),
+          style: const TextStyle(fontSize: 16),
+        ));
+      }
+
+      // Добавляем команду с выделением
+      spans.add(TextSpan(
+        text: text.substring(match.start, match.end),
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: Colors.cyan,
+        ),
+      ));
+
+      lastEnd = match.end;
+    }
+
+    // Добавляем оставшийся текст после последней команды
+    if (lastEnd < text.length) {
+      spans.add(TextSpan(
+        text: text.substring(lastEnd),
+        style: const TextStyle(fontSize: 16),
+      ));
+    }
+
+    return spans;
+  }
+
   Widget _buildInputArea() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _messageController,
-              decoration: const InputDecoration(
-                hintText: 'Введите ваш вопрос о здоровью или команду (/start, /help, /add_reminder, /list_reminders)...',
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.all(12),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Команды подсказки
+        SizedBox(
+          height: 36,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            shrinkWrap: true,
+            children: [
+              _buildCommandChip('/start', 'Начало'),
+              _buildCommandChip('/help', 'Помощь'),
+              _buildCommandChip('/profile', 'Профиль'),
+              _buildCommandChip('/reminders', 'Напоминания'),
+              _buildCommandChip('/add_reminder', 'Напоминание'),
+              _buildCommandChip('/list_reminders', 'Список'),
+              _buildCommandChip('/bmi', 'ИМТ'),
+              _buildCommandChip('/symptoms', 'Симптомы'),
+              _buildCommandChip('/diet', 'Питание'),
+              _buildCommandChip('/exercise', 'Упражнения'),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        // Поле ввода
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _messageController,
+                decoration: InputDecoration(
+                  hintText: 'Введите ваш вопрос о здоровью или команду...',
+                  border: const OutlineInputBorder(),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                  suffixIcon: IconButton(
+                    onPressed: _sendMessage,
+                    icon: const Icon(
+                      Icons.send,
+                    ),
+                  ),
+                ),
+                onSubmitted: (value) => _sendMessage(),
               ),
-              onSubmitted: (value) => _sendMessage(),
             ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCommandChip(String command, String label) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0),
+      child: InputChip(
+        label: Text(
+          command,
+          style: const TextStyle(
+            fontSize: 12,
           ),
-          const SizedBox(width: 8),
-          FloatingActionButton(
-            onPressed: _sendMessage,
-            backgroundColor: Colors.cyan,
-            child: const Icon(Icons.send, color: Colors.white),
+        ),
+        labelStyle: const TextStyle(fontSize: 12),
+        avatar: Container(
+          width: 16,
+          height: 16,
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
           ),
-        ],
+          child: const Icon(
+            Icons.arrow_forward_ios,
+            size: 10,
+          ),
+        ),
+        onSelected: (bool selected) {
+          if (selected) {
+            _messageController.text = command;
+            _messageController.selection = TextSelection.fromPosition(
+              TextPosition(offset: _messageController.text.length),
+            );
+          }
+        },
       ),
     );
   }

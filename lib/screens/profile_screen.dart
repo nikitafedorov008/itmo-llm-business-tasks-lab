@@ -41,8 +41,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Профиль пользователя'),
-        backgroundColor: Colors.cyan,
-        foregroundColor: Colors.white,
+        surfaceTintColor: Colors.cyan,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -60,75 +59,103 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Имя',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Пожалуйста, введите ваше имя';
-                    }
-                    return null;
-                  },
+                // Горизонтальный ряд для Имени и Возраста
+                Row(
+                  children: [
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: TextFormField(
+                          controller: _nameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Имя',
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Пожалуйста, введите ваше имя';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 8.0),
+                        child: TextFormField(
+                          controller: _ageController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'Возраст',
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Пожалуйста, введите ваш возраст';
+                            }
+                            final age = int.tryParse(value);
+                            if (age == null || age <= 0 || age > 150) {
+                              return 'Пожалуйста, введите корректный возраст';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
-                  controller: _ageController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Возраст',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Пожалуйста, введите ваш возраст';
-                    }
-                    final age = int.tryParse(value);
-                    if (age == null || age <= 0 || age > 150) {
-                      return 'Пожалуйста, введите корректный возраст';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _weightController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Вес (кг)',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Пожалуйста, введите ваш вес';
-                    }
-                    final weight = double.tryParse(value);
-                    if (weight == null || weight <= 0 || weight > 1000) {
-                      return 'Пожалуйста, введите корректный вес';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _heightController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Рост (см)',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Пожалуйста, введите ваш рост';
-                    }
-                    final height = double.tryParse(value);
-                    if (height == null || height <= 0 || height > 300) {
-                      return 'Пожалуйста, введите корректный рост';
-                    }
-                    return null;
-                  },
+                // Горизонтальный ряд для Веса и Роста
+                Row(
+                  children: [
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: TextFormField(
+                          controller: _weightController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'Вес (кг)',
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Пожалуйста, введите ваш вес';
+                            }
+                            final weight = double.tryParse(value);
+                            if (weight == null || weight <= 0 || weight > 1000) {
+                              return 'Пожалуйста, введите корректный вес';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 8.0),
+                        child: TextFormField(
+                          controller: _heightController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'Рост (см)',
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Пожалуйста, введите ваш рост';
+                            }
+                            final height = double.tryParse(value);
+                            if (height == null || height <= 0 || height > 300) {
+                              return 'Пожалуйста, введите корректный рост';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 const Text(
@@ -208,9 +235,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildStatRow('ИМТ', '${profileProvider.bmi.toStringAsFixed(2)}'),
-                        const Divider(),
-                        _buildStatRow('Категория', _getBMICategory(profileProvider.bmi)),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildStatRow('ИМТ', '${profileProvider.bmi.toStringAsFixed(2)}'),
+                            ),
+                            Expanded(
+                              child: _buildStatRow('Категория', _getBMICategory(profileProvider.bmi)),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -226,10 +260,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildStatRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontSize: 16)),
+          Text(label, style: const TextStyle(fontSize: 14, color: Colors.grey)),
+          const SizedBox(height: 4),
           Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         ],
       ),

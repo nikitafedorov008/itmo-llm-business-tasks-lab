@@ -8,8 +8,7 @@ class HelpScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Справка'),
-        backgroundColor: Colors.cyan,
-        foregroundColor: Colors.white,
+        surfaceTintColor: Colors.cyan,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
