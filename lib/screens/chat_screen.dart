@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import '../providers/chat_provider.dart';
 import '../providers/profile_provider.dart';
 import '../services/chatgpt_service.dart';
@@ -137,10 +138,19 @@ class _ChatScreenState extends State<ChatScreen> {
       return _buildFormattedText(text);
     }
 
-    // Просто обычный текст
-    return Text(
-      text,
-      style: const TextStyle(fontSize: 16),
+    // Для всех остальных сообщений - используем Markdown для форматирования
+    return MarkdownBody(
+      data: text,
+      selectable: true,
+      styleSheet: MarkdownStyleSheet(
+        p: const TextStyle(fontSize: 16),
+        h1: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        h2: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        h3: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        listBullet: const TextStyle(fontSize: 16),
+        code: const TextStyle(fontSize: 14, backgroundColor: Colors.grey),
+        a: const TextStyle(color: Colors.cyan),
+      ),
     );
   }
 

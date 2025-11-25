@@ -15,6 +15,7 @@ class ChatGPTService {
     if (apiKey != null && apiKey.isNotEmpty) {
       _chat = ChatOpenAI(
         apiKey: apiKey,
+        baseUrl: 'https://api.proxyapi.ru/openai/v1',
         defaultOptions: const ChatOpenAIOptions(
           model: 'gpt-5-mini',
         ),
@@ -40,6 +41,7 @@ class ChatGPTService {
 
       // Формируем системное сообщение с информацией о пользователе
       final systemMessage = SystemChatMessage(content: '''Вы являетесь персональным ассистентом по здоровью. Отвечайте на вопросы пользователя о здоровье, питании, физических упражнениях и других медицинских темах. ВАЖНО: Я не врач. При серьезных симптомах немедленно обратитесь к специалисту.
+      Информация должна предоставляться в формате markdown.
 
 Данные пользователя: $profileInfo''');
 
