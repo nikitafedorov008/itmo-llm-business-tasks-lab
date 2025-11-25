@@ -11,7 +11,7 @@ import 'screens/reminders_screen.dart';
 
 void main() async {
   // Инициализация .env файла
-  await dotenv.load(fileName: ".env");
+  // await dotenv.load(fileName: ".env");
   runApp(const HealthAssistantApp());
 }
 
