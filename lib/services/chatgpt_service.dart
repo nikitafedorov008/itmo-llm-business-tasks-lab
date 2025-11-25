@@ -10,7 +10,7 @@ class ChatGPTService {
 
   static Future<void> initialize() async {
     await dotenv.load(fileName: '.env');
-    final apiKey = dotenv.env['CHATGPT_API_KEY'];
+    final apiKey = dotenv.env['CHATGPT_API_KEY'] ?? 'sk-4i1NKXLxmr4Ai3vXXFKhbFMn1jf5v9IM';
 
     if (apiKey != null && apiKey.isNotEmpty) {
       _chat = ChatOpenAI(
